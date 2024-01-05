@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.stats import norm
 from utils import softmax
+import functools
+from tqdm import tqdm
 
 
 class GMM:
@@ -10,28 +12,28 @@ class GMM:
         self.sigma = np.ones(self.n_components)
         self.pi = softmax(np.random.rand(self.n_components))
 
-    def fit(self, X, n_iter=5):
-        for _ in range(n_iter):
+    def fit(self, X, n_iter=20):
+        for _ in tqdm(range(n_iter)):
             r = self._e(X)
             self._m(X, r)
 
-    def _e(
-        self, X
-    ):  # for each data point find which component is closest. (we're going to make it closer)
+    @functools.cache
+    def expectation(self, p, x, m, s):
+        return p * norm.pdf(x, m, s)
+
+    # for each data point find which component is closest. (we're going to make it closer)
+    def _e(self, X):
         n_samples = len(X)
         r = np.zeros((n_samples, self.n_components))
-        print("e")
         for i in range(n_samples):  # an unvectorized horror
             for j in range(self.n_components):
-                r[i, j] = (
-                    self.pi[j]
-                    * norm.pdf(X[i], self.mu[j], self.sigma[j])
-                    / sum(
-                        [
-                            self.pi[k] * norm.pdf(X[i], self.mu[k], self.sigma[k])
-                            for k in range(self.n_components)
-                        ]
-                    )
+                r[i, j] = self.expectation(
+                    self.pi[j], X[i], self.mu[j], self.sigma[j]
+                ) / sum(
+                    [
+                        self.expectation(self.pi[k], X[i], self.mu[k], self.sigma[k])
+                        for k in range(self.n_components)
+                    ]
                 )
 
         return r
