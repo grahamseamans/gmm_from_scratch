@@ -19,4 +19,5 @@ def plot(datas, gmm, fig_name="default.png", plot_dir="plots"):
         x_axis = np.arange(min, max, 0.001)
         for mu, sigma in zip(gmm.mu, gmm.sigma):
             plt.plot(x_axis, norm.pdf(x_axis, mu, sigma), color="black")
+    plt.title(fig_name.split(".")[0])
     plt.savefig(os.path.join(plot_dir, fig_name))
